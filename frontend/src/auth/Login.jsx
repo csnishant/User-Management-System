@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, LogIn, ArrowRight, Sparkles } from "lucide-react";
-// 1. Constant ko import karein
 import { AUTH_API_END_POINT } from "../utils/constant";
 
 const Login = () => {
@@ -15,7 +14,6 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // 2. URL ki jagah AUTH_API_END_POINT use karein
       const res = await fetch(`${AUTH_API_END_POINT}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -24,16 +22,23 @@ const Login = () => {
 
       const data = await res.json();
 
-      if (data.token) {
+      if (res.ok && data.success) {
+        // 1. Save Token
         localStorage.setItem("token", data.token);
-        localStorage.setItem("username", data.username);
+
+        // 2. Save full user data (contains role, username, etc.)
+        localStorage.setItem("user_info", JSON.stringify(data.data));
+
+        // 3. Force a small delay or window reload if the App state doesn't update
+        // but navigate usually works fine with the App logic above.
         navigate("/dashboard");
+        window.location.reload(); // Force App.jsx to re-read localStorage
       } else {
-        alert(data.message || "Login failed");
+        alert(data.message || "Invalid credentials");
       }
     } catch (err) {
-      console.error(err);
-      alert("Server error!");
+      console.error("Login Error:", err);
+      alert("Something went wrong with the server.");
     } finally {
       setLoading(false);
     }
@@ -41,7 +46,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F2F2F7] p-6 font-sans overflow-hidden">
-      {/* Background Decor */}
       <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-indigo-200 rounded-full blur-[120px] opacity-40 animate-pulse" />
       <div className="absolute bottom-[-10%] left-[-5%] w-[30rem] h-[30rem] bg-blue-100 rounded-full blur-[150px] opacity-50" />
 
@@ -82,14 +86,6 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-          </div>
-
-          <div className="text-right px-2">
-            <button
-              type="button"
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
-              Forgot Password?
-            </button>
           </div>
 
           <button

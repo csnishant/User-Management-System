@@ -1,29 +1,37 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./auth/Login.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
 import Register from "./auth/Register.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// Import all 3 views
+import UserDashboard from "./pages/UserDashboard.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import ManagerDashboard from "./pages/ManagerDashboard.jsx"; // Create this or use AdminDashboard
+
 function App() {
+  // Get user info from localStorage
+  const user = JSON.parse(localStorage.getItem("user_info"));
+  const userRole = user?.role || "user";
+
   return (
     <Routes>
-      {/* Public Routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* Protected Routes */}
+      {/* Single Dynamic Dashboard Route */}
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            {userRole === "admin" && <AdminDashboard />}
+            {userRole === "manager" && <ManagerDashboard />}
+            {userRole === "user" && <UserDashboard />}
           </ProtectedRoute>
         }
       />
 
-      {/* Fallback - Ye automatically handle karega logic */}
-      <Route path="*" element={<Navigate to="/dashboard" />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }

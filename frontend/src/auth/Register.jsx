@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { User, Mail, Lock, ShieldCheck, ArrowRight } from "lucide-react";
+import {
+  User,
+  Mail,
+  Lock,
+  ShieldCheck,
+  ArrowRight,
+  UserCog,
+} from "lucide-react"; // UserCog icon add kiya
 import { AUTH_API_END_POINT } from "../utils/constant";
 
 const Register = () => {
@@ -8,6 +15,7 @@ const Register = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("user"); // Default role 'user'
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e) => {
@@ -15,19 +23,18 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // Backend integration logic
+      // Role ko body mein include kiya
       const response = await fetch(`${AUTH_API_END_POINT}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ username, email, password, role }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Token save karein aur redirect
-        localStorage.setItem("token", data.token);
-        navigate("/dashboard");
+        localStorage.setItem("token", data.data.token); // data.data check karlein backend response ke hisab se
+        navigate("/login"); // Register ke baad login pe bhejna better practice hai
       } else {
         alert(data.message || "Registration failed");
       }
@@ -41,12 +48,10 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F2F2F7] p-6 font-sans overflow-hidden">
-      {/* Background Decor - Glassmorphism touch */}
       <div className="absolute top-[-5%] left-[-5%] w-80 h-80 bg-indigo-300 rounded-full blur-[100px] opacity-20" />
       <div className="absolute bottom-[-5%] right-[-5%] w-[30rem] h-[30rem] bg-blue-300 rounded-full blur-[120px] opacity-20" />
 
       <div className="relative w-full max-w-[420px] bg-white/70 backdrop-blur-2xl border border-white/50 rounded-[3rem] shadow-[0_32px_64px_-15px_rgba(0,0,0,0.07)] p-12">
-        {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-[2rem] shadow-2xl shadow-indigo-200 mb-6">
             <ShieldCheck className="text-white w-10 h-10" />
@@ -99,7 +104,26 @@ const Register = () => {
             />
           </div>
 
-          {/* Action Button */}
+          {/* --- ROLE SELECTION DROPDOWN --- */}
+          <div className="relative group">
+            <UserCog className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 w-5 h-5 transition-colors z-10" />
+            <select
+              className="w-full pl-14 pr-5 py-5 bg-white/50 border border-gray-100 rounded-[1.5rem] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-gray-800 appearance-none cursor-pointer"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              required>
+              <option value="user">User (Standard Access)</option>
+              <option value="manager">Manager (Moderate Access)</option>
+              <option value="admin">Admin (Full Access)</option>
+            </select>
+            {/* Custom Arrow for select */}
+            <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+              </svg>
+            </div>
+          </div>
+
           <button
             disabled={loading}
             className="w-full bg-indigo-600 text-white py-5 rounded-[1.5rem] font-bold shadow-2xl shadow-indigo-200 hover:bg-indigo-700 active:scale-[0.97] disabled:opacity-70 transition-all flex items-center justify-center space-x-3 mt-8">
