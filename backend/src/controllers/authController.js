@@ -54,55 +54,51 @@ export const registerUser = async (req, res) => {
   }
 };
 // ✅ Login User
+// ✅ Login User
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 🔍 Validate input
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required",
-      });
+      return res.status(400).json({ success: false, message: "Email and password are required" });
     }
 
-    // 🔍 Find user
     const user = await User.findOne({ email }).select("+password");
 
-    // ❌ Check user & password
     if (!user || !(await user.matchPassword(password))) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
+      return res.status(401).json({ success: false, message: "Invalid email or password" });
     }
 
-    // ❌ Check inactive user
     if (user.status === "inactive") {
-      return res.status(403).json({
-        success: false,
-        message: "Account is inactive. Contact admin.",
-      });
+      return res.status(403).json({ success: false, message: "Account is inactive. Contact admin." });
     }
 
-    // ✅ Response
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      data: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id),
-      },
-    });
+    const token = generateToken(user._id);
+
+    // 🍪 Setting the Cookie
+    const cookieOptions = {
+      httpOnly: true, // Frontend JS ise read nahi kar payegi (Security)
+      secure: process.env.NODE_ENV === "production", // Sirf HTTPS par chalega production mein
+      sameSite: "Lax", // CSRF protection ke liye
+      maxAge: 1 * 24 * 60 * 60 * 1000, // 1 din mein expire hogi
+    };
+
+    res.status(200)
+      .cookie("token", token, cookieOptions) // Token cookie mein set kiya
+      .json({
+        success: true,
+        message: "Login successful",
+        data: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          token, // Frontend Compatibility ke liye abhi bhi bhej rahe hain
+        },
+      });
   } catch (error) {
     console.error("Error in loginUser:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 

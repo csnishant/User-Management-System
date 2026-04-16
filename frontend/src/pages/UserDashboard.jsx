@@ -62,10 +62,6 @@ const UserDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
-  };
 
   if (loading) {
     return (
@@ -85,11 +81,7 @@ const UserDashboard = () => {
             Manage your personal information
           </p>
         </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 bg-white text-red-500 px-6 py-3 rounded-2xl font-bold shadow-sm hover:bg-red-50 transition-all border border-gray-100">
-          <LogOut size={18} /> Logout
-        </button>
+     
       </div>
 
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, LogIn, ArrowRight, Sparkles } from "lucide-react";
 import { AUTH_API_END_POINT } from "../utils/constant";
+import { toast, Toaster } from "react-hot-toast"; // 1. Toast Import kiya
 
 const Login = () => {
   const navigate = useNavigate();
@@ -9,47 +10,58 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
- const handleLogin = async (e) => {
-   e.preventDefault();
-   setLoading(true);
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-   try {
-     const res = await fetch(`${AUTH_API_END_POINT}/login`, {
-       method: "POST",
-       headers: { "Content-Type": "application/json" },
-       body: JSON.stringify({ email, password }),
-     });
+    // basic validation
+    if (!email || !password) {
+      return toast.error("Please fill in all fields");
+    }
 
-     const result = await res.json(); // Iska naam 'result' rakh dete hain confusion se bachne ke liye
+    setLoading(true);
+    try {
+      const res = await fetch(`${AUTH_API_END_POINT}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-     if (res.ok && result.success) {
-       // ✅ FIX: Token result.data ke andar hai (Aapke backend response ke mutabik)
-       const token = result.data.token;
-       const userInfo = result.data;
+      const result = await res.json();
 
-       if (token) {
-         localStorage.setItem("token", token);
-         localStorage.setItem("user_info", JSON.stringify(userInfo));
+      if (res.ok && result.success) {
+        const token = result.data.token;
+        const userInfo = result.data;
 
-         // Dashboard par navigate karein
-         navigate("/dashboard");
-         // Reload is useful because App.jsx uses a constant variable for user info
-         window.location.reload();
-       } else {
-         alert("Token not found in response!");
-       }
-     } else {
-       alert(result.message || "Invalid credentials");
-     }
-   } catch (err) {
-     console.error("Login Error:", err);
-     alert("Something went wrong with the server.");
-   } finally {
-     setLoading(false);
-   }
- };
+        if (token) {
+          localStorage.setItem("token", token);
+          localStorage.setItem("user_info", JSON.stringify(userInfo));
+
+          toast.success("Login successful! Welcome back."); // Success Toast
+
+          // Thoda delay taaki user toast dekh sake before navigation
+          setTimeout(() => {
+            navigate("/dashboard");
+            window.location.reload();
+          }, 1000);
+        } else {
+          toast.error("Token not found in response!");
+        }
+      } else {
+        toast.error(result.message || "Invalid credentials"); // Error Toast
+      }
+    } catch (err) {
+      console.error("Login Error:", err);
+      toast.error("Something went wrong with the server.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F2F2F7] p-6 font-sans overflow-hidden">
+      {/* 2. Toaster Component - Notifications render karne ke liye */}
+      <Toaster position="top-right" reverseOrder={false} />
+
       <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-indigo-200 rounded-full blur-[120px] opacity-40 animate-pulse" />
       <div className="absolute bottom-[-10%] left-[-5%] w-[30rem] h-[30rem] bg-blue-100 rounded-full blur-[150px] opacity-50" />
 

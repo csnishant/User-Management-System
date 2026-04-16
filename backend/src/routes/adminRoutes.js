@@ -6,8 +6,9 @@ import {
   updateUser,
 } from "../controllers/adminController.js";
 
-import { isAdmin } from "../middleware/isAdmin.js";
+
 import { protect } from "../middleware/authMiddleware.js";
+import { isAdmin } from "../middleware/isRole.js";
 
 const router = express.Router();
 

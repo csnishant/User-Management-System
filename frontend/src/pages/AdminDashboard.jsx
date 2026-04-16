@@ -46,7 +46,7 @@ const AdminDashboard = () => {
           search: searchTerm,
           role: filters.role,
           status: filters.status,
-          limit: 8,
+          limit:100,
         },
       });
       if (res.data.success) {

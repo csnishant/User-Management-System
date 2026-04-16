@@ -52,7 +52,30 @@ export const createUserByAdmin = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const allowedFields = ["username", "email", "role", "status"];
+    const currentUser = req.user; // Login user (Admin/Manager)
+
+    // 1. Target user ko pehle fetch karein taaki uska role check ho sake
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // 2. 🔥 Manager Restriction Logic
+    if (currentUser.role === "manager" && targetUser.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Managers cannot update Admin details",
+      });
+    }
+
+    // 3. Role-based Allowed Fields
+    // Manager kisi ka 'role' change nahi kar sakta, sirf Admin kar sakta hai
+    const allowedFields = ["username", "email", "status"];
+    if (currentUser.role === "admin") {
+      allowedFields.push("role");
+    }
 
     const updates = {};
     for (let key of allowedFields) {
@@ -65,23 +88,17 @@ export const updateUser = async (req, res) => {
       updates.email = updates.email.toLowerCase().trim();
     }
 
-    // ⬇️ Audit: Add updatedBy field
-    updates.updatedBy = req.user?._id;
+    // Audit: Add updatedBy field
+    updates.updatedBy = currentUser?._id;
 
+    // 4. Update Execution
     const user = await User.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
     })
       .select("-password")
-      .populate("createdBy", "username email") // ⬇️ Populate to see details
+      .populate("createdBy", "username email")
       .populate("updatedBy", "username email");
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
 
     res.status(200).json({
       success: true,
@@ -167,6 +184,14 @@ export const getUserById = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (req.user.role === "manager") {
+      return res.status(403).json({
+        success: false,
+        message: "Managers cannot delete users",
+      });
+    }
+
     const user = await User.findById(id);
     if (!user) {
       return res
