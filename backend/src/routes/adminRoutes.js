@@ -1,25 +1,31 @@
 import express from "express";
 import {
   createUserByAdmin,
-  updateUserRole,
   deleteUser,
   getAllUsers,
+  updateUser,
 } from "../controllers/adminController.js";
-
 
 import { isAdmin } from "../middleware/isAdmin.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// 🔐 All routes protected (Admin only)
-router.post("/create-user", protect, isAdmin, createUserByAdmin);
+// 🔐 Common middleware
+const adminAccess = [protect, isAdmin];
 
-router.put("/update-role/:id", protect, isAdmin, updateUserRole);
+// 👇 USERS COLLECTION ROUTES
+router
+  .route("/users")
+  .all(...adminAccess)
+  .get(getAllUsers)
+  .post(createUserByAdmin);
 
-router.delete("/delete-user/:id", protect, isAdmin, deleteUser);
-
-router.get("/all-users", protect, isAdmin, getAllUsers);
-
+// 👇 SINGLE USER ROUTES
+router
+  .route("/users/:id")
+  .all(...adminAccess)
+  .put(updateUser)
+  .delete(deleteUser);
 
 export default router;

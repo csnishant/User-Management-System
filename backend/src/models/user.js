@@ -55,6 +55,11 @@ const userSchema = new mongoose.Schema(
   },
 );
 
+// Add a helper method to check if user is active
+userSchema.methods.isActive = function () {
+  return this.status === "active";
+};
+
 // 🔐 Hash password before saving
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
