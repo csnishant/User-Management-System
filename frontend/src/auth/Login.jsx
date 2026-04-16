@@ -9,41 +9,45 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+ const handleLogin = async (e) => {
+   e.preventDefault();
+   setLoading(true);
 
-    try {
-      const res = await fetch(`${AUTH_API_END_POINT}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+   try {
+     const res = await fetch(`${AUTH_API_END_POINT}/login`, {
+       method: "POST",
+       headers: { "Content-Type": "application/json" },
+       body: JSON.stringify({ email, password }),
+     });
 
-      const data = await res.json();
+     const result = await res.json(); // Iska naam 'result' rakh dete hain confusion se bachne ke liye
 
-      if (res.ok && data.success) {
-        // 1. Save Token
-        localStorage.setItem("token", data.token);
+     if (res.ok && result.success) {
+       // ✅ FIX: Token result.data ke andar hai (Aapke backend response ke mutabik)
+       const token = result.data.token;
+       const userInfo = result.data;
 
-        // 2. Save full user data (contains role, username, etc.)
-        localStorage.setItem("user_info", JSON.stringify(data.data));
+       if (token) {
+         localStorage.setItem("token", token);
+         localStorage.setItem("user_info", JSON.stringify(userInfo));
 
-        // 3. Force a small delay or window reload if the App state doesn't update
-        // but navigate usually works fine with the App logic above.
-        navigate("/dashboard");
-        window.location.reload(); // Force App.jsx to re-read localStorage
-      } else {
-        alert(data.message || "Invalid credentials");
-      }
-    } catch (err) {
-      console.error("Login Error:", err);
-      alert("Something went wrong with the server.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+         // Dashboard par navigate karein
+         navigate("/dashboard");
+         // Reload is useful because App.jsx uses a constant variable for user info
+         window.location.reload();
+       } else {
+         alert("Token not found in response!");
+       }
+     } else {
+       alert(result.message || "Invalid credentials");
+     }
+   } catch (err) {
+     console.error("Login Error:", err);
+     alert("Something went wrong with the server.");
+   } finally {
+     setLoading(false);
+   }
+ };
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F2F2F7] p-6 font-sans overflow-hidden">
       <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-indigo-200 rounded-full blur-[120px] opacity-40 animate-pulse" />

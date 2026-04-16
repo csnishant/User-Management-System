@@ -10,15 +10,25 @@ export const protect = async (req, res, next) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      req.user = await User.findById(decoded.id).select("-password");
+      // DEBUG: Yahan check karein decoded object mein kya aa raha hai
+      // console.log("Decoded Token:", decoded);
+
+      // Agar token sign karte waqt { id: user._id } tha toh theek hai,
+      // warna decoded._id use karein
+      req.user = await User.findById(decoded.id || decoded._id).select(
+        "-password",
+      );
+
+      if (!req.user) {
+        return res.status(401).json({ message: "User not found" });
+      }
 
       next();
     } catch (error) {
-      return res.status(401).json({ message: "Not authorized" });
+      console.error("JWT Verify Error:", error.message);
+      return res.status(401).json({ message: "Not authorized, token failed" });
     }
-  }
-
-  if (!token) {
-    return res.status(401).json({ message: "No token" });
+  } else {
+    return res.status(401).json({ message: "No token, authorization denied" });
   }
 };

@@ -1,38 +1,56 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+
 import Login from "./auth/Login.jsx";
 import Register from "./auth/Register.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
-
-// Import all 3 views
 import UserDashboard from "./pages/UserDashboard.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
-import ManagerDashboard from "./pages/ManagerDashboard.jsx"; // Create this or use AdminDashboard
+import ManagerDashboard from "./pages/ManagerDashboard.jsx";
+import Navbar from "./components/layout/Navbar.jsx";
 
 function App() {
-  // Get user info from localStorage
   const user = JSON.parse(localStorage.getItem("user_info"));
   const userRole = user?.role || "user";
+  const location = useLocation();
+
+  // In pages par Navbar nahi dikhega
+  const authPages = ["/login", "/register"];
+  const showNavbar = !authPages.includes(location.pathname);
 
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+    <>
+      {/* Agar auth page nahi hai, toh Navbar dikhao */}
+      {showNavbar && <Navbar />}
 
-      {/* Single Dynamic Dashboard Route */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            {userRole === "admin" && <AdminDashboard />}
-            {userRole === "manager" && <ManagerDashboard />}
-            {userRole === "user" && <UserDashboard />}
-          </ProtectedRoute>
-        }
-      />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              {userRole === "admin" && <AdminDashboard />}
+              {userRole === "manager" && <ManagerDashboard />}
+              {userRole === "user" && <UserDashboard />}
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Profile Page (Optional: Agar alag se rakhna ho) */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <UserDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </>
   );
 }
 
