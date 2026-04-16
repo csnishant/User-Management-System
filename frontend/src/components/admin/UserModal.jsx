@@ -60,7 +60,7 @@ const UserModal = ({
             <input
               type="password"
               name="password"
-              placeholder="Password (Optional)"
+              placeholder="Password"
               value={userData.password || ""}
               onChange={handleChange}
               className="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-gray-700"
