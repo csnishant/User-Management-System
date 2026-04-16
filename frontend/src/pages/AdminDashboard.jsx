@@ -125,9 +125,9 @@ const AdminDashboard = () => {
             <UserPlus size={20} /> Create New User
           </button>
         </div>
-
         {/* Filters & Search */}
         <div className="flex flex-wrap gap-4 mb-6">
+          {/* Search Bar */}
           <div className="bg-white p-3 rounded-2xl shadow-sm flex items-center border border-gray-100 flex-1 min-w-[300px]">
             <Search className="text-gray-400 mr-3" />
             <input
@@ -141,14 +141,46 @@ const AdminDashboard = () => {
               }}
             />
           </div>
+
+          {/* Role Filter */}
           <select
-            className="bg-white px-4 rounded-2xl border border-gray-100 font-bold text-gray-600 outline-none"
-            onChange={(e) => setFilters({ ...filters, role: e.target.value })}>
+            className="bg-white px-4 rounded-2xl border border-gray-100 font-bold text-gray-600 outline-none h-12"
+            value={filters.role}
+            onChange={(e) => {
+              setFilters({ ...filters, role: e.target.value });
+              setCurrentPage(1); // Reset to first page on filter change
+            }}>
             <option value="">All Roles</option>
             <option value="admin">Admin</option>
             <option value="manager">Manager</option>
             <option value="user">User</option>
           </select>
+
+          {/* Status Filter - ADDED THIS */}
+          <select
+            className="bg-white px-4 rounded-2xl border border-gray-100 font-bold text-gray-600 outline-none h-12"
+            value={filters.status}
+            onChange={(e) => {
+              setFilters({ ...filters, status: e.target.value });
+              setCurrentPage(1); // Reset to first page on filter change
+            }}>
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+
+          {/* Optional: Reset Button */}
+          {(filters.role || filters.status || searchTerm) && (
+            <button
+              onClick={() => {
+                setFilters({ role: "", status: "" });
+                setSearchTerm("");
+                setCurrentPage(1);
+              }}
+              className="text-indigo-600 font-bold px-4 hover:underline">
+              Clear All
+            </button>
+          )}
         </div>
 
         {/* Table */}
