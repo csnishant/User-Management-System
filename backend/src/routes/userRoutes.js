@@ -1,16 +1,17 @@
 import express from "express";
+const router = express.Router();
 import {
   getMyProfile,
   updateMyProfile,
 } from "../controllers/userController.js";
-import { protect } from "../middleware/authMiddleware.js"; // Aapka JWT verification middleware
+import { protect } from "../middleware/authMiddleware.js";
 
-const router = express.Router();
-
-// Sabhi routes protected honge
+// Sabhi profile routes protected honge
 router.use(protect);
 
-router.get("/profile", getMyProfile);
-router.put("/profile", updateMyProfile);
+router
+  .route("/profile")
+  .get(getMyProfile) // GET /api/v1/user/profile
+  .put(updateMyProfile); // PUT /api/v1/user/profile
 
 export default router;
