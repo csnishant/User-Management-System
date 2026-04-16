@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
 import { MANAGER_API_END_POINT } from "../utils/constant";
-import UserFilters from "../components/admin/UserFilters.jsx";
-import UserTable from "../components/admin/UserTable.jsx";
-import UserModal from "../components/admin/UserModal.jsx";
+import UserFilters from "../components/dashboard/UserFilters.jsx";
+import UserTable from "../components/dashboard/UserTable.jsx";
+import UserModal from "../components/dashboard/UserModal.jsx";
 
 const ManagerDashboard = () => {
   const [users, setUsers] = useState([]);

@@ -3,9 +3,9 @@ import axios from "axios";
 import { UserPlus } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast"; // 1. Toast Import kiya
 import { ADMIN_API_END_POINT } from "../utils/constant";
-import UserFilters from "../components/admin/UserFilters.jsx";
-import UserTable from "../components/admin/UserTable.jsx";
-import UserModal from "../components/admin/UserModal.jsx";
+import UserFilters from "../components/dashboard/UserFilters.jsx";
+import UserTable from "../components/dashboard/UserTable.jsx";
+import UserModal from "../components/dashboard/UserModal.jsx";
 import Swal from "sweetalert2";
 
 
