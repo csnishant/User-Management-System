@@ -8,7 +8,6 @@ const userSchema = new mongoose.Schema(
       required: [true, "Username is required"],
       trim: true,
     },
-
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -17,33 +16,28 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please use a valid email address"],
     },
-
     password: {
       type: String,
       required: [true, "Password is required"],
       minlength: 6,
-      select: false, // ❗ hide password by default
+      select: false,
     },
-
     role: {
       type: String,
       enum: ["admin", "manager", "user"],
       default: "user",
     },
-
     status: {
       type: String,
       enum: ["active", "inactive"],
       default: "active",
     },
-
-    // 🔍 Audit fields
+    // Audit fields (Jo aapne pehle se add kiye hain)
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
-
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -51,16 +45,11 @@ const userSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // createdAt, updatedAt
+    timestamps: true, // handles createdAt, updatedAt automatically
   },
 );
 
-// Add a helper method to check if user is active
-userSchema.methods.isActive = function () {
-  return this.status === "active";
-};
-
-// 🔐 Hash password before saving
+// Hash password logic... (Same as your original code)
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 
@@ -68,12 +57,10 @@ userSchema.pre("save", async function () {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// 🔐 Compare password (for login)
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// ❌ Remove sensitive data when sending response
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;
@@ -81,5 +68,4 @@ userSchema.methods.toJSON = function () {
 };
 
 const User = mongoose.model("User", userSchema);
-
 export default User;

@@ -1,9 +1,7 @@
-
 // ✅ CREATE USER (Admin only)
 import User from "../models/user.js";
 import crypto from "crypto";
 
-// Helper: generate password
 const generatePassword = () => crypto.randomBytes(6).toString("hex");
 
 export const createUserByAdmin = async (req, res) => {
@@ -35,6 +33,7 @@ export const createUserByAdmin = async (req, res) => {
       password: generatedPassword,
       role: role || "user",
       status: status || "active",
+      // ⬇️ Audit: Current logged-in admin ID
       createdBy: req.user?._id,
     });
 
@@ -49,11 +48,10 @@ export const createUserByAdmin = async (req, res) => {
   }
 };
 
-// ✅ UPDATE USER 
+// ✅ UPDATE USER
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-
     const allowedFields = ["username", "email", "role", "status"];
 
     const updates = {};
@@ -67,10 +65,16 @@ export const updateUser = async (req, res) => {
       updates.email = updates.email.toLowerCase().trim();
     }
 
+    // ⬇️ Audit: Add updatedBy field
+    updates.updatedBy = req.user?._id;
+
     const user = await User.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
-    }).select("-password");
+    })
+      .select("-password")
+      .populate("createdBy", "username email") // ⬇️ Populate to see details
+      .populate("updatedBy", "username email");
 
     if (!user) {
       return res.status(404).json({
@@ -89,47 +93,16 @@ export const updateUser = async (req, res) => {
   }
 };
 
-// ✅ DELETE USER
-export const deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const user = await User.findById(id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    await User.findByIdAndDelete(id);
-
-    res.status(200).json({
-      success: true,
-      message: "User deleted successfully",
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
-  }
-};
-
+// ✅ GET ALL USERS (With Audit Details)
 export const getAllUsers = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "", role, status } = req.query;
-
     const query = {};
 
-    // ❌ exclude current logged-in user
     if (req.user?._id) {
       query._id = { $ne: req.user._id };
     }
 
-    // Search
     if (search) {
       query.$or = [
         { username: { $regex: search, $options: "i" } },
@@ -137,7 +110,6 @@ export const getAllUsers = async (req, res) => {
       ];
     }
 
-    // Filters
     if (role) query.role = role;
     if (status) query.status = status;
 
@@ -145,6 +117,8 @@ export const getAllUsers = async (req, res) => {
 
     const users = await User.find(query)
       .select("-password")
+      .populate("createdBy", "username") // ⬇️ Sirf username fetch karein
+      .populate("updatedBy", "username")
       .skip(skip)
       .limit(Number(limit))
       .sort({ createdAt: -1 });
@@ -165,9 +139,13 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+// ✅ GET SINGLE USER (With Audit Details)
 export const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
+    const user = await User.findById(req.params.id)
+      .select("-password")
+      .populate("createdBy", "username email") // ⬇️ Important for Detail View
+      .populate("updatedBy", "username email");
 
     if (!user) {
       return res.status(404).json({
@@ -182,5 +160,24 @@ export const getUserById = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// DELETE USER (Same as your code)
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    await User.findByIdAndDelete(id);
+    res
+      .status(200)
+      .json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
