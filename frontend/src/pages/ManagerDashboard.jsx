@@ -1,88 +1,74 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
 import { MANAGER_API_END_POINT } from "../utils/constant";
 import UserTable from "../components/dashboard/UserTable.jsx";
 import UserModal from "../components/dashboard/UserModal.jsx";
-// 1. Context Import
+
+// Context Hooks
 import { useUserContext } from "../context/UserContext";
+import { useAuth } from "../context/AuthContext";
 
 const ManagerDashboard = () => {
-  // 2. Context States
-  const { users, loading, fetchUsers } = useUserContext();
+  const { user } = useAuth();
+  const { users, loading, fetchUsers, updateUser } = useUserContext();
 
   // Local UI States
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Naya Status Filter state (Dashboard ke andar)
   const [statusFilter, setStatusFilter] = useState("");
 
-  const managerAxios = axios.create({
-    baseURL: MANAGER_API_END_POINT,
-    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-  });
-
-  // 3. Fetch users whenever status or page changes
+  // Initial Fetch & Filters
   useEffect(() => {
-    const params = {
+    fetchUsers(MANAGER_API_END_POINT, {
       page: currentPage,
-      status: statusFilter, // Direct status filter use ho raha hai
-    };
-    fetchUsers(MANAGER_API_END_POINT, params);
+      status: statusFilter,
+    });
   }, [currentPage, statusFilter]);
 
-  // --- UPDATE LOGIC ---
+  // --- Fast Update Action ---
   const handleUpdateSubmit = async (id) => {
+    // 1. Edit mode turant band karein
+    setEditingId(null); 
     try {
-      const res = await managerAxios.put(`/users/${id}`, editForm);
-      if (res.data.success) {
-        toast.success("User updated successfully!");
-        setEditingId(null);
-        fetchUsers(MANAGER_API_END_POINT, { status: statusFilter });
-      }
+      // 2. Background mein update hone dein (Context handle karega UI update)
+      await updateUser(MANAGER_API_END_POINT, id, editForm);
+      toast.success("User updated!");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Update failed");
+      toast.error("Update failed");
     }
-  };
-
-  const startEditing = (user) => {
-    if (user.role === "admin") {
-      return toast.error("Managers cannot edit Admin details!");
-    }
-    setEditingId(user._id);
-    setEditForm({ ...user });
-  };
-
-  const openViewModal = (user) => {
-    setEditForm(user);
-    setShowModal(true);
   };
 
   return (
-    <div className="p-8 bg-[#F8F9FC] min-h-screen">
+    <div className="p-6 bg-[#F8F9FC] min-h-screen">
       <Toaster position="top-right" />
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-black text-gray-900">
-              Manager Dashboard
-            </h1>
-            <p className="text-gray-500">View and update team members status</p>
-          </div>
 
-          {/* 4. Custom Status Filter Dropdown */}
-          <div className="flex items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-100">
-            <span className="text-sm font-bold text-gray-600 ml-2">
-              Filter Status:
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-black text-gray-900">
+            Manager Dashboard
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Managing team as:{" "}
+            <span className="font-bold text-indigo-600">{user?.username}</span>
+          </p>
+        </div>
+
+        {/* Filters */}
+        <div className="flex justify-end mb-6">
+          <div className="bg-white px-3 py-1 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-400 uppercase">
+              Status:
             </span>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-gray-50 border-none text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium outline-none">
-              <option value="">All Status</option>
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="bg-transparent border-none text-sm font-bold outline-none p-1 cursor-pointer">
+              <option value="">All Members</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
               <option value="pending">Pending</option>
@@ -90,30 +76,45 @@ const ManagerDashboard = () => {
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center p-20 font-bold text-indigo-600 animate-pulse">
-            Loading team data...
+        {/* --- Optimized Table Section --- */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
+          {/* 1. Loading hone par Table ko gayab nahi karenge, sirf opacity kam karenge */}
+          <div
+            className={`${loading ? "opacity-40 pointer-events-none" : "opacity-100"} transition-all duration-300`}>
+            <UserTable
+              users={users}
+              editingId={editingId}
+              editForm={editForm}
+              setEditForm={setEditForm}
+              startEditing={(u) => {
+                if (u.role === "admin")
+                  return toast.error("Cannot edit Admin!");
+                setEditingId(u._id);
+                setEditForm({ ...u });
+              }}
+              handleUpdateSubmit={handleUpdateSubmit}
+              handleDelete={null}
+              setEditingId={setEditingId}
+              openViewModal={(u) => {
+                setEditForm(u);
+                setShowModal(true);
+              }}
+            />
           </div>
-        ) : (
-          <UserTable
-            users={users}
-            editingId={editingId}
-            editForm={editForm}
-            setEditForm={setEditForm}
-            startEditing={startEditing}
-            handleUpdateSubmit={handleUpdateSubmit}
-            handleDelete={null} // Manager delete nahi kar sakta
-            setEditingId={setEditingId}
-            openViewModal={openViewModal}
-          />
-        )}
+
+          {/* 2. Loading Spinner overlay (Table ke upar dikhega, table delete nahi hoga) */}
+          {loading && (
+            <div className="flex justify-center mt-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            </div>
+          )}
+        </div>
 
         <UserModal
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           mode="view"
           userData={editForm}
-          setUserData={setEditForm}
         />
       </div>
     </div>

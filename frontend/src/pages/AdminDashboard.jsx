@@ -40,30 +40,29 @@ const AdminDashboard = () => {
   // Handle Create
   const handleCreateUser = async (e) => {
     e.preventDefault();
+    setShowModal(false); // 🔥 Modal ko API call se pehle hi band kar dein
+
     try {
       const data = await createUser(ADMIN_API_END_POINT, newUser);
       if (data.success) {
         toast.success("User created!");
-        setShowModal(false);
         setNewUser({ username: "", email: "", password: "", role: "user" });
-        fetchUsers(ADMIN_API_END_POINT, { page: currentPage });
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Creation failed");
+      toast.error("Failed to create");
+      setShowModal(true); // Error aaye toh wapas khol dein
     }
   };
 
   // Handle Update
   const handleUpdateSubmit = async (id) => {
+    setEditingId(null); // Pehle hi edit mode band kar do (Fast Feel)
     try {
-      const data = await updateUser(ADMIN_API_END_POINT, id, editForm);
-      if (data.success) {
-        toast.success("User updated!");
-        setEditingId(null);
-        fetchUsers(ADMIN_API_END_POINT, { page: currentPage });
-      }
+      // API background mein chalti rahegi
+      await updateUser(ADMIN_API_END_POINT, id, editForm);
+      toast.success("Updated successfully");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Update failed");
+      toast.error("Error updating");
     }
   };
 
@@ -71,24 +70,24 @@ const AdminDashboard = () => {
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: "Are you sure?",
+      text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#4f46e5",
+      cancelButtonColor: "#ef4444",
+      confirmButtonText: "Yes, delete it!",
     });
 
     if (result.isConfirmed) {
       try {
-        const data = await deleteUser(ADMIN_API_END_POINT, id);
-        if (data.success) {
-          toast.success("Deleted!");
-          fetchUsers(ADMIN_API_END_POINT, { page: currentPage });
-        }
+        // Background mein delete hone dein
+        await deleteUser(ADMIN_API_END_POINT, id);
+        toast.success("Deleted!");
       } catch (err) {
         toast.error("Delete failed");
       }
     }
   };
-
   // UI helpers
   const startEditing = (user) => {
     setEditingId(user._id);
@@ -135,6 +134,11 @@ const AdminDashboard = () => {
             setEditingId={setEditingId}
             openViewModal={openViewModal}
           />
+        )}
+        {loading && (
+          <div className="flex justify-center mt-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          </div>
         )}
 
         <UserModal

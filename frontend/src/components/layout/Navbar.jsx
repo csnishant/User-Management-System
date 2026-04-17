@@ -42,7 +42,8 @@ const Navbar = () => {
           {/* Logo Section */}
           <div className="flex items-center">
             <h1 className="text-xl font-black text-indigo-600 tracking-tighter">
-              PM TECH
+              UM <span className="text-lg text-gray-900">System</span>
+            
             </h1>
 
             {/* Desktop Links - Hidden on Mobile */}
