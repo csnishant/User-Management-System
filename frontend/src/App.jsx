@@ -17,9 +17,6 @@ function App() {
   if (loading) return null;
 
   const userRole = user?.role || "user";
-
-  // ✅ Navbar ko sirf Login aur Register par hide karein
-  // Baaki sab jagah (Dashboards) par dikhega
   const hideNavbarOn = ["/login", "/register"];
   const showNavbar = !hideNavbarOn.includes(location.pathname);
 
@@ -27,12 +24,19 @@ function App() {
     <div className="min-h-screen flex flex-col bg-[#F2F2F7]">
       {showNavbar && <Navbar />}
 
-      {/* Main Content Area - isme hum padding-top add karte hain agar Navbar fixed ho */}
       <main className={`flex-grow ${showNavbar ? "pt-4" : ""}`}>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          {/* ✅ Agar user logged in hai, toh login/register page access nahi hoga */}
+          <Route
+            path="/login"
+            element={user ? <Navigate to="/dashboard" replace /> : <Login />}
+          />
+          <Route
+            path="/register"
+            element={user ? <Navigate to="/dashboard" replace /> : <Register />}
+          />
 
+          {/* Protected Routes */}
           <Route
             path="/dashboard"
             element={

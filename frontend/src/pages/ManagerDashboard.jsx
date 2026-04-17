@@ -30,7 +30,7 @@ const ManagerDashboard = () => {
   // --- Fast Update Action ---
   const handleUpdateSubmit = async (id) => {
     // 1. Edit mode turant band karein
-    setEditingId(null); 
+    setEditingId(null);
     try {
       // 2. Background mein update hone dein (Context handle karega UI update)
       await updateUser(MANAGER_API_END_POINT, id, editForm);
@@ -101,13 +101,12 @@ const ManagerDashboard = () => {
               }}
             />
           </div>
+        </div>
 
-          {/* 2. Loading Spinner overlay (Table ke upar dikhega, table delete nahi hoga) */}
-          {loading && (
-            <div className="flex justify-center mt-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            </div>
-          )}
+        <div className="flex flex-col items-center justify-center p-20 space-y-4">
+          {/* Ek chhota elegant spinner jo main spinner se alag dikhe */}
+          <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+          <p className="text-gray-500 font-medium">Fetching users data...</p>
         </div>
 
         <UserModal

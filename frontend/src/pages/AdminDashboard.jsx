@@ -121,7 +121,11 @@ const AdminDashboard = () => {
         />
 
         {loading ? (
-          <div className="text-center p-20">Loading...</div>
+          <div className="flex flex-col items-center justify-center p-20 space-y-4">
+            {/* Ek chhota elegant spinner jo main spinner se alag dikhe */}
+            <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+            <p className="text-gray-500 font-medium">Fetching users data...</p>
+          </div>
         ) : (
           <UserTable
             users={users}
@@ -135,11 +139,7 @@ const AdminDashboard = () => {
             openViewModal={openViewModal}
           />
         )}
-        {loading && (
-          <div className="flex justify-center mt-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-          </div>
-        )}
+   
 
         <UserModal
           isOpen={showModal}
