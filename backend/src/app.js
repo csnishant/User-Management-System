@@ -9,15 +9,27 @@ import cookieParser from "cookie-parser";
 
 const app = express();
 
-// ✅ FIX: CORS Configuration
+// ✅ Sabhi Origins ki list (Local + Netlify)
+const allowedOrigins = [
+  "http://localhost:5173", // Local Frontend
+  "https://user-management-sys-nis.netlify.app", // Aapka Netlify URL (Replace this)
+];
+
 const corsOptions = {
-  origin: "http://localhost:5173", // Aapka frontend URL
-  credentials: true, // Cookies aur Tokens allow karne ke liye
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: function (origin, callback) {
+    // Agar origin list mein hai ya origin null hai (like Postman/Mobile apps)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-app.use(cors(corsOptions)); // Default cors() ki jagah corsOptions use karein
+app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 
@@ -27,7 +39,6 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/manager", managerRoutes);
 
-// Error middleware (ALWAYS LAST)
 app.use(errorHandler);
 
 export default app;
