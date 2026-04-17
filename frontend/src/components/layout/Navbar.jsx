@@ -1,34 +1,27 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import {
-  LogOut,
-  User,
-  LayoutDashboard,
-  Settings,
-  Menu,
-  X,
-  ShieldCheck,
-} from "lucide-react";
+import { LogOut, User, LayoutDashboard, Settings, Menu, X } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+ // 🔥 Context Hook Import karein
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // Mobile menu toggle state
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const userStr = localStorage.getItem("user_info");
-  const user = userStr ? JSON.parse(userStr) : null;
+  // ✅ Context se LIVE user aur logout function lein
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.clear();
+    logout(); // Context wala logout call karein
     navigate("/login");
-    window.location.reload();
   };
 
+  // ✅ Agar user nahi hai, toh Navbar bilkul render nahi hoga
   if (!user) return null;
 
   const isActive = (path) => location.pathname === path;
 
-  // Role based text helper
   const getDashboardLabel = () => {
     if (user.role === "admin") return "Admin Console";
     if (user.role === "manager") return "Manager Desk";
@@ -43,10 +36,9 @@ const Navbar = () => {
           <div className="flex items-center">
             <h1 className="text-xl font-black text-indigo-600 tracking-tighter">
               UM <span className="text-lg text-gray-900">System</span>
-            
             </h1>
 
-            {/* Desktop Links - Hidden on Mobile */}
+            {/* Desktop Links */}
             <div className="hidden md:flex ml-10 space-x-8 text-sm font-bold text-gray-500">
               <Link
                 to="/dashboard"
@@ -74,7 +66,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Right Side (Role & Logout) - Desktop */}
+          {/* Right Side - Desktop */}
           <div className="hidden md:flex items-center gap-4">
             <div className="flex flex-col items-end">
               <span className="text-[10px] uppercase tracking-widest text-gray-400 font-black">
@@ -98,7 +90,7 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* Mobile Menu Button - Visible only on Mobile */}
+          {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -111,7 +103,7 @@ const Navbar = () => {
 
       {/* Mobile Menu Content */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-4 pt-2 pb-6 space-y-2 shadow-lg">
+        <div className="md:hidden bg-white border-t border-gray-100 px-4 pt-2 pb-6 space-y-2 shadow-lg animate-in slide-in-from-top duration-300">
           <div className="px-3 py-2 border-b border-gray-50 mb-2">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
               Logged in as
@@ -140,15 +132,6 @@ const Navbar = () => {
               </div>
             </Link>
           )}
-
-          <Link
-            to="/dashboard"
-            onClick={() => setIsMenuOpen(false)}
-            className="block px-3 py-3 text-base font-bold text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl">
-            <div className="flex items-center gap-3">
-              <Settings size={20} /> My Profile
-            </div>
-          </Link>
 
           <button
             onClick={handleLogout}
