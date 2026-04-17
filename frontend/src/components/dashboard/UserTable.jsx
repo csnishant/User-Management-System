@@ -1,5 +1,14 @@
 import React from "react";
-import { Edit2, Trash2, Check, X, Eye } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Edit2,
+  Trash2,
+  Check,
+  X,
+  Eye,
+  Shield,
+  User as UserIcon,
+} from "lucide-react";
 
 const UserTable = ({
   users,
@@ -14,219 +23,247 @@ const UserTable = ({
 }) => {
   const isManagerDashboard = !handleDelete;
 
+  // Animation Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 15, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { type: "spring", stiffness: 100 },
+    },
+  };
+
   return (
-    <div className="bg-white md:rounded-[2rem] rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      {/* Desktop Table View - Hidden on Mobile */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50/50 border-b border-gray-100">
-            <tr className="text-xs font-black text-gray-400 uppercase tracking-wider">
-              <th className="px-8 py-5">Full Info</th>
-              <th className="px-8 py-5">Role</th>
-              <th className="px-8 py-5">Status</th>
-              <th className="px-8 py-5 text-right">Actions</th>
+    <div className="relative">
+      {/* Desktop Table - Ultra Clean Look */}
+      <div className="hidden md:block overflow-x-auto rounded-[2rem]">
+        <table className="w-full text-left border-separate border-spacing-y-2 px-4">
+          <thead>
+            <tr className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.1em]">
+              <th className="px-6 py-4">User Identity</th>
+              <th className="px-6 py-4">Designation</th>
+              <th className="px-6 py-4">Account Status</th>
+              <th className="px-6 py-4 text-right">Management</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <motion.tbody
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible">
             {users.map((user) => (
-              <TableRow
+              <motion.tr
                 key={user._id}
-                user={user}
-                isEditing={editingId === user._id}
-                editForm={editForm}
-                setEditForm={setEditForm}
-                startEditing={startEditing}
-                handleUpdateSubmit={handleUpdateSubmit}
-                handleDelete={handleDelete}
-                openViewModal={openViewModal}
-                setEditingId={setEditingId}
-                isManagerDashboard={isManagerDashboard}
-              />
+                variants={itemVariants}
+                className="group bg-white/60 hover:bg-white transition-all duration-300 shadow-sm hover:shadow-md border border-white">
+                <td className="px-6 py-4 first:rounded-l-2xl border-y border-l border-transparent group-hover:border-indigo-100">
+                  {editingId === user._id ? (
+                    <EditInputs editForm={editForm} setEditForm={setEditForm} />
+                  ) : (
+                    <UserInfo user={user} />
+                  )}
+                </td>
+                <td className="px-6 py-4 border-y border-transparent group-hover:border-indigo-100">
+                  <RoleSelect
+                    disabled={!handleDelete || editingId !== user._id}
+                    value={editingId === user._id ? editForm.role : user.role}
+                    onChange={(val) => setEditForm({ ...editForm, role: val })}
+                    isEditing={editingId === user._id}
+                  />
+                </td>
+                <td className="px-6 py-4 border-y border-transparent group-hover:border-indigo-100">
+                  <StatusSelect
+                    isEditing={editingId === user._id}
+                    value={
+                      editingId === user._id ? editForm.status : user.status
+                    }
+                    onChange={(val) =>
+                      setEditForm({ ...editForm, status: val })
+                    }
+                  />
+                </td>
+                <td className="px-6 py-4 text-right last:rounded-r-2xl border-y border-r border-transparent group-hover:border-indigo-100">
+                  <ActionButtons
+                    isEditing={editingId === user._id}
+                    user={user}
+                    isManagerDashboard={isManagerDashboard}
+                    handleUpdateSubmit={handleUpdateSubmit}
+                    setEditingId={setEditingId}
+                    startEditing={startEditing}
+                    handleDelete={handleDelete}
+                    openViewModal={openViewModal}
+                  />
+                </td>
+              </motion.tr>
             ))}
-          </tbody>
+          </motion.tbody>
         </table>
       </div>
 
-      {/* Mobile Card View - Hidden on Desktop */}
-      <div className="md:hidden divide-y divide-gray-100">
+      {/* Mobile Premium Card List */}
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="md:hidden space-y-4 px-4 pb-10">
         {users.map((user) => (
-          <UserMobileCard
+          <motion.div
             key={user._id}
-            user={user}
-            isEditing={editingId === user._id}
-            editForm={editForm}
-            setEditForm={setEditForm}
-            startEditing={startEditing}
-            handleUpdateSubmit={handleUpdateSubmit}
-            handleDelete={handleDelete}
-            openViewModal={openViewModal}
-            setEditingId={setEditingId}
-            isManagerDashboard={isManagerDashboard}
-          />
+            variants={itemVariants}
+            className="bg-white/80 backdrop-blur-md rounded-3xl p-5 border border-white shadow-lg shadow-indigo-100/20">
+            <div className="flex justify-between items-start mb-4">
+              {editingId === user._id ? (
+                <EditInputs editForm={editForm} setEditForm={setEditForm} />
+              ) : (
+                <UserInfo user={user} />
+              )}
+              <StatusSelect
+                isEditing={editingId === user._id}
+                value={editingId === user._id ? editForm.status : user.status}
+                onChange={(val) => setEditForm({ ...editForm, status: val })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+              <div className="flex flex-col">
+                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
+                  Role Type
+                </span>
+                <RoleSelect
+                  disabled={!handleDelete || editingId !== user._id}
+                  value={editingId === user._id ? editForm.role : user.role}
+                  onChange={(val) => setEditForm({ ...editForm, role: val })}
+                  isEditing={editingId === user._id}
+                />
+              </div>
+              <ActionButtons
+                isEditing={editingId === user._id}
+                user={user}
+                isManagerDashboard={isManagerDashboard}
+                handleUpdateSubmit={handleUpdateSubmit}
+                setEditingId={setEditingId}
+                startEditing={startEditing}
+                handleDelete={handleDelete}
+                openViewModal={openViewModal}
+              />
+            </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 };
 
-// --- Desktop Row Component ---
-const TableRow = ({
-  user,
-  isEditing,
-  editForm,
-  setEditForm,
-  startEditing,
-  handleUpdateSubmit,
-  handleDelete,
-  openViewModal,
-  setEditingId,
-  isManagerDashboard,
-}) => {
-  const isTargetAdmin = user.role === "admin";
-
-  return (
-    <tr className="hover:bg-gray-50/30 transition-colors">
-      <td className="px-8 py-5">
-        {isEditing ? (
-          <EditInputs editForm={editForm} setEditForm={setEditForm} />
-        ) : (
-          <UserInfo user={user} />
-        )}
-      </td>
-      <td className="px-8 py-5">
-        <RoleSelect
-          disabled={!handleDelete || !isEditing}
-          value={isEditing ? editForm.role : user.role}
-          onChange={(val) => setEditForm({ ...editForm, role: val })}
-          isEditing={isEditing}
-          showBorder={isEditing && handleDelete}
-        />
-      </td>
-      <td className="px-8 py-5">
-        <StatusSelect
-          isEditing={isEditing}
-          value={isEditing ? editForm.status : user.status}
-          onChange={(val) => setEditForm({ ...editForm, status: val })}
-        />
-      </td>
-      <td className="px-8 py-5 text-right">
-        <ActionButtons
-          isEditing={isEditing}
-          user={user}
-          isManagerDashboard={isManagerDashboard}
-          isTargetAdmin={isTargetAdmin}
-          handleUpdateSubmit={handleUpdateSubmit}
-          setEditingId={setEditingId}
-          startEditing={startEditing}
-          handleDelete={handleDelete}
-          openViewModal={openViewModal}
-        />
-      </td>
-    </tr>
-  );
-};
-
-// --- Mobile Card Component ---
-const UserMobileCard = ({
-  user,
-  isEditing,
-  editForm,
-  setEditForm,
-  startEditing,
-  handleUpdateSubmit,
-  handleDelete,
-  openViewModal,
-  setEditingId,
-  isManagerDashboard,
-}) => {
-  const isTargetAdmin = user.role === "admin";
-
-  return (
-    <div className="p-5 space-y-4">
-      <div className="flex justify-between items-start">
-        {isEditing ? (
-          <EditInputs editForm={editForm} setEditForm={setEditForm} />
-        ) : (
-          <UserInfo user={user} />
-        )}
-        <StatusSelect
-          isEditing={isEditing}
-          value={isEditing ? editForm.status : user.status}
-          onChange={(val) => setEditForm({ ...editForm, status: val })}
-        />
-      </div>
-
-      <div className="flex items-center justify-between bg-gray-50 p-3 rounded-xl">
-        <div className="flex flex-col">
-          <span className="text-[10px] text-gray-400 font-black uppercase">
-            Role
-          </span>
-          <RoleSelect
-            disabled={!handleDelete || !isEditing}
-            value={isEditing ? editForm.role : user.role}
-            onChange={(val) => setEditForm({ ...editForm, role: val })}
-            isEditing={isEditing}
-            showBorder={isEditing && handleDelete}
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <ActionButtons
-            isEditing={isEditing}
-            user={user}
-            isManagerDashboard={isManagerDashboard}
-            isTargetAdmin={isTargetAdmin}
-            handleUpdateSubmit={handleUpdateSubmit}
-            setEditingId={setEditingId}
-            startEditing={startEditing}
-            handleDelete={handleDelete}
-            openViewModal={openViewModal}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- Shared Helper Components (Dry Code) ---
+// --- Sub-components (Upgraded Visuals) ---
 
 const UserInfo = ({ user }) => (
-  <div className="flex items-center gap-3">
-    <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 font-black shrink-0">
-      {user.username?.[0]?.toUpperCase()}
+  <div className="flex items-center gap-4">
+    <div className="relative group">
+      <div className="w-12 h-12 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-indigo-200">
+        {user.username?.[0]?.toUpperCase()}
+      </div>
+      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
+        {user.role === "admin" ? (
+          <Shield size={10} className="text-orange-500" />
+        ) : (
+          <UserIcon size={10} className="text-indigo-500" />
+        )}
+      </div>
     </div>
     <div className="min-w-0">
-      <p className="font-black text-gray-900 leading-tight truncate">
+      <h3 className="font-bold text-gray-900 truncate tracking-tight">
         {user.username}
-      </p>
-      <p className="text-xs text-gray-400 font-bold truncate">{user.email}</p>
+      </h3>
+      <p className="text-xs text-gray-400 font-medium truncate">{user.email}</p>
     </div>
   </div>
 );
 
-const EditInputs = ({ editForm, setEditForm }) => (
-  <div className="space-y-2 w-full max-w-[200px]">
-    <input
-      className="block w-full border border-indigo-200 rounded-lg px-2 py-1 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-      value={editForm.username}
-      onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-    />
-    <input
-      className="block w-full border border-indigo-200 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500"
-      value={editForm.email}
-      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-    />
-  </div>
+const ActionButtons = ({
+  isEditing,
+  user,
+  isManagerDashboard,
+  handleUpdateSubmit,
+  setEditingId,
+  startEditing,
+  handleDelete,
+  openViewModal,
+}) => {
+  const isTargetAdmin = user.role === "admin";
+  const btnClass =
+    "p-2.5 rounded-2xl transition-all duration-200 active:scale-90 ";
+
+  return (
+    <div className="flex gap-2 justify-end">
+      {isEditing ? (
+        <>
+          <button
+            onClick={() => handleUpdateSubmit(user._id)}
+            className={`${btnClass} bg-indigo-600 text-white shadow-md shadow-indigo-200`}>
+            <Check size={18} />
+          </button>
+          <button
+            onClick={() => setEditingId(null)}
+            className={`${btnClass} bg-gray-100 text-gray-500 hover:bg-gray-200`}>
+            <X size={18} />
+          </button>
+        </>
+      ) : (
+        <>
+          <button
+            onClick={() => startEditing(user)}
+            disabled={isManagerDashboard && isTargetAdmin}
+            className={`${btnClass} ${isManagerDashboard && isTargetAdmin ? "opacity-20" : "text-indigo-500 bg-indigo-50 hover:bg-indigo-600 hover:text-white"}`}>
+            <Edit2 size={18} />
+          </button>
+          <button
+            onClick={() => openViewModal(user)}
+            className={`${btnClass} text-blue-500 bg-blue-50 hover:bg-blue-600 hover:text-white`}>
+            <Eye size={18} />
+          </button>
+          {handleDelete && (
+            <button
+              onClick={() => handleDelete(user._id)}
+              className={`${btnClass} text-red-500 bg-red-50 hover:bg-red-600 hover:text-white`}>
+              <Trash2 size={18} />
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+const StatusSelect = ({ isEditing, value, onChange }) => (
+  <select
+    disabled={!isEditing}
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border-2 transition-all ${
+      value === "active"
+        ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+        : "bg-rose-50 text-rose-600 border-rose-100"
+    } ${isEditing ? "cursor-pointer ring-2 ring-indigo-100" : "appearance-none"}`}>
+    <option value="active">Active</option>
+    <option value="inactive">Inactive</option>
+  </select>
 );
 
-const RoleSelect = ({ disabled, value, onChange, isEditing, showBorder }) => (
+const RoleSelect = ({ disabled, value, onChange, isEditing }) => (
   <select
     disabled={disabled}
     value={value}
     onChange={(e) => onChange(e.target.value)}
-    className={`text-sm font-black rounded-lg p-1 outline-none ${
-      showBorder
-        ? "bg-white border border-indigo-200"
+    className={`text-xs font-black rounded-xl px-3 py-1.5 outline-none transition-all ${
+      isEditing
+        ? "bg-white border-2 border-indigo-100 ring-2 ring-indigo-50 shadow-sm"
         : "bg-transparent text-gray-500 appearance-none"
     }`}>
     <option value="user">USER</option>
@@ -235,68 +272,18 @@ const RoleSelect = ({ disabled, value, onChange, isEditing, showBorder }) => (
   </select>
 );
 
-const StatusSelect = ({ isEditing, value, onChange }) => (
-  <select
-    disabled={!isEditing}
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border-none outline-none ${
-      value === "active"
-        ? "bg-green-100 text-green-600"
-        : "bg-red-100 text-red-600"
-    } ${!isEditing && "appearance-none cursor-default"}`}>
-    <option value="active">Active</option>
-    <option value="inactive">Inactive</option>
-  </select>
-);
-
-const ActionButtons = ({
-  isEditing,
-  user,
-  isManagerDashboard,
-  isTargetAdmin,
-  handleUpdateSubmit,
-  setEditingId,
-  startEditing,
-  handleDelete,
-  openViewModal,
-}) => (
-  <div className="flex gap-2">
-    {isEditing ? (
-      <>
-        <button
-          onClick={() => handleUpdateSubmit(user._id)}
-          className="p-2 bg-green-500 text-white rounded-xl shadow-lg">
-          <Check size={18} />
-        </button>
-        <button
-          onClick={() => setEditingId(null)}
-          className="p-2 bg-gray-100 text-gray-400 rounded-xl">
-          <X size={18} />
-        </button>
-      </>
-    ) : (
-      <>
-        <button
-          onClick={() => startEditing(user)}
-          disabled={isManagerDashboard && isTargetAdmin}
-          className={`p-2 rounded-xl ${isManagerDashboard && isTargetAdmin ? "text-gray-200" : "text-indigo-400 hover:bg-indigo-50"}`}>
-          <Edit2 size={18} />
-        </button>
-        {handleDelete && (
-          <button
-            onClick={() => handleDelete(user._id)}
-            className="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl">
-            <Trash2 size={18} />
-          </button>
-        )}
-        <button
-          onClick={() => openViewModal(user)}
-          className="p-2 text-blue-400 hover:bg-blue-50 rounded-xl">
-          <Eye size={18} />
-        </button>
-      </>
-    )}
+const EditInputs = ({ editForm, setEditForm }) => (
+  <div className="space-y-2 max-w-[180px]">
+    <input
+      className="block w-full bg-white border-2 border-indigo-50 rounded-xl px-3 py-1.5 font-bold text-sm outline-none focus:border-indigo-500 transition-all"
+      value={editForm.username}
+      onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+    />
+    <input
+      className="block w-full bg-white border-2 border-indigo-50 rounded-xl px-3 py-1.5 text-[10px] outline-none focus:border-indigo-500 transition-all"
+      value={editForm.email}
+      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+    />
   </div>
 );
 
